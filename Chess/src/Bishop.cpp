@@ -11,3 +11,7 @@ bool Bishop::isValidMove(int destRow, int destCol, const Board& board) const {
 }
 
 char Bishop::getSymbol() const { return isWhite ? 'B' : 'b'; }
+
+Piece* Bishop::clone() const {
+    return new Bishop(*this);
+}

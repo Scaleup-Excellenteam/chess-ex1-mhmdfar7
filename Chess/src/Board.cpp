@@ -42,8 +42,7 @@ Board::Board(const Board& other) {
     for (int i = 0; i < 8; ++i) {
         for (int j = 0; j < 8; ++j) {
             if (other.squares[i][j]) {
-                // Clone each piece properly (simplified for brevity)
-                squares[i][j] = nullptr;
+                squares[i][j] = other.squares[i][j]->clone();
             }
             else {
                 squares[i][j] = nullptr;
@@ -54,7 +53,20 @@ Board::Board(const Board& other) {
 
 Board& Board::operator=(const Board& other) {
     if (this != &other) {
-        // Implement proper assignment (simplified for brevity)
+        for (int i = 0; i < 8; ++i)
+            for (int j = 0; j < 8; ++j)
+                delete squares[i][j];
+
+        for (int i = 0; i < 8; ++i) {
+            for (int j = 0; j < 8; ++j) {
+                if (other.squares[i][j]) {
+                    squares[i][j] = other.squares[i][j]->clone();
+                }
+                else {
+                    squares[i][j] = nullptr;
+                }
+            }
+        }
     }
     return *this;
 }
@@ -62,6 +74,42 @@ Board& Board::operator=(const Board& other) {
 Piece* Board::getPiece(int row, int col) const {
     if (row < 0 || row >= 8 || col < 0 || col >= 8) return nullptr;
     return squares[row][col];
+}
+
+bool Board::isCheckmate(bool whiteTurn) {
+    if (!isKingInCheck(whiteTurn)) return false;
+    auto legalMoves = listLegalMoves(whiteTurn);
+    return legalMoves.empty();
+}
+
+bool Board::isStalemate(bool whiteTurn) {
+    if (isKingInCheck(whiteTurn)) return false;
+    return listLegalMoves(whiteTurn).empty();
+}
+
+bool Board::canCastle(bool isWhite, bool kingSide) const {
+    int row = isWhite ? 7 : 0;
+    int kingCol = 4;
+    int rookCol = kingSide ? 7 : 0;
+    int direction = kingSide ? 1 : -1;
+
+    Piece* king = getPiece(row, kingCol);
+    Piece* rook = getPiece(row, rookCol);
+
+    if (!king || !rook || king->getHasMoved() || rook->getHasMoved()) return false;
+
+    for (int c = kingCol + direction; c != rookCol; c += direction) {
+        if (getPiece(row, c)) return false;
+    }
+
+    for (int i = 0; i <= 2; ++i) {
+        int c = kingCol + i * direction;
+        Board temp = *this;
+        temp.makeMove(row, kingCol, row, c);
+        if (temp.isKingInCheck(isWhite)) return false;
+    }
+
+    return true;
 }
 
 bool Board::isKingInCheck(bool isWhite) const {
@@ -102,6 +150,29 @@ void Board::makeMove(int srcRow, int srcCol, int destRow, int destCol) {
     squares[destRow][destCol] = srcPiece;
     squares[srcRow][srcCol] = nullptr;
     srcPiece->setPosition(destRow, destCol);
+    srcPiece->setHasMoved(true);
+
+    if (srcPiece->getSymbol() == (srcPiece->getIsWhite() ? 'K' : 'k') && abs(destCol - srcCol) == 2) {
+        int row = srcRow;
+        if (destCol > srcCol) {
+            Piece* rook = getPiece(row, 7);
+            squares[row][5] = rook;
+            squares[row][7] = nullptr;
+            if (rook) {
+                rook->setPosition(row, 5);
+                rook->setHasMoved(true);
+            }
+        }
+        else {
+            Piece* rook = getPiece(row, 0);
+            squares[row][3] = rook;
+            squares[row][0] = nullptr;
+            if (rook) {
+                rook->setPosition(row, 3);
+                rook->setHasMoved(true);
+            }
+        }
+    }
 }
 
 std::vector<Move> Board::listLegalMoves(bool whiteToMove) const {
@@ -110,15 +181,13 @@ std::vector<Move> Board::listLegalMoves(bool whiteToMove) const {
         for (int c = 0; c < 8; ++c) {
             Piece* p = getPiece(r, c);
             if (!p || p->getIsWhite() != whiteToMove) continue;
-            // try every destination
             for (int dr = 0; dr < 8; ++dr) {
                 for (int dc = 0; dc < 8; ++dc) {
                     if (p->isValidMove(dr, dc, *this)) {
-                        // make sure it doesn’t leave king in check
                         Board temp = *this;
                         temp.makeMove(r, c, dr, dc);
                         if (!temp.isKingInCheck(whiteToMove)) {
-                            out.push_back(Move{ r,c,dr,dc });
+                            out.push_back(Move{ r, c, dr, dc });
                         }
                     }
                 }

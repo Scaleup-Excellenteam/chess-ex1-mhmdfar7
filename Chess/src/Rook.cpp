@@ -11,3 +11,8 @@ bool Rook::isValidMove(int destRow, int destCol, const Board& board) const {
 }
 
 char Rook::getSymbol() const { return isWhite ? 'R' : 'r'; }
+
+Piece* Rook::clone() const {
+    return new Rook(*this);
+}
+
