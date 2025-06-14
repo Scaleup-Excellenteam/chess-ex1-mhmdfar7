@@ -20,3 +20,7 @@ bool Pawn::isValidMove(int destRow, int destCol, const Board& board) const {
 }
 
 char Pawn::getSymbol() const { return isWhite ? 'P' : 'p'; }
+
+Piece* Pawn::clone() const {
+    return new Pawn(*this);
+}

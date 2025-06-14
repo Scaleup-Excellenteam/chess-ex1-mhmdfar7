@@ -1,3 +1,4 @@
+
 #include "Piece.h"
 #include "Board.h"
 #include <algorithm>
@@ -8,6 +9,14 @@ bool Piece::getIsWhite() const { return isWhite; }
 int Piece::getRow() const { return row; }
 int Piece::getCol() const { return col; }
 void Piece::setPosition(int newRow, int newCol) { row = newRow; col = newCol; }
+
+bool Piece::getHasMoved() const {
+    return hasMoved;
+}
+
+void Piece::setHasMoved(bool moved) {
+    hasMoved = moved;
+}
 
 bool Piece::isPathClear(int destRow, int destCol, const Board& board) const {
     int rowStep = (destRow > row) ? 1 : (destRow < row) ? -1 : 0;

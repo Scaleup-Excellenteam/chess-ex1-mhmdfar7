@@ -11,3 +11,7 @@ bool Queen::isValidMove(int destRow, int destCol, const Board& board) const {
 }
 
 char Queen::getSymbol() const { return isWhite ? 'Q' : 'q'; }
+
+Piece* Queen::clone() const {
+    return new Queen(*this);
+}

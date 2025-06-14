@@ -12,3 +12,7 @@ bool Knight::isValidMove(int destRow, int destCol, const Board& board) const {
 }
 
 char Knight::getSymbol() const { return isWhite ? 'N' : 'n'; }
+
+Piece* Knight::clone() const {
+    return new Knight(*this);
+}
